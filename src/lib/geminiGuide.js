@@ -1,12 +1,22 @@
 import { GoogleGenAI } from '@google/genai'
 
-let _ai = null
-function getAI() {
-  if (!_ai) _ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY ?? '' })
-  return _ai
+const fallbackByMove = {
+  Safe:       { effect: 'Keeps the vibe warm and comfortable.',            example: 'That sounds fun — what was the best part?' },
+  Curious:    { effect: 'Shows interest and keeps the conversation going.', example: 'What made that moment stand out for you?' },
+  Relatable:  { effect: 'Builds connection through shared experience.',     example: "I totally get that — I needed a reset too." },
+  Unexpected: { effect: 'Adds energy when the chat feels predictable.',     example: 'Quick game: describe your mood in 3 emojis.' },
 }
 
 export async function getGuidance({ messages, move, playstyle }) {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+
+  if (!apiKey) {
+    console.warn('[gemini] Missing API key — using fallback guidance')
+    return fallbackByMove[move] ?? fallbackByMove.Safe
+  }
+
+  const ai = new GoogleGenAI({ apiKey })
+
   const chatHistory = messages
     .map((m) => `${m.sender === 'me' ? 'User' : 'Match'}: ${m.text}`)
     .join('\n')
@@ -34,7 +44,7 @@ Rules:
 - Do NOT include any explanation outside the JSON
 `.trim()
 
-  const response = await getAI().models.generateContent({
+  const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: prompt,
   })

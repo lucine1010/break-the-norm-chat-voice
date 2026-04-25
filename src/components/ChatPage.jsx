@@ -12,35 +12,90 @@ const modeOptions = [
 function pickReply(userText) {
   const t = userText.toLowerCase()
 
+  // ── Question-word responses (answer first, then optionally flip) ──────────
+  if (/\bwhere\b/.test(t)) {
+    if (/hik|trail|walk|climb|mountain/.test(t))
+      return "I went to a small trail near the lake. It was really peaceful. Do you hike often?"
+    if (/travel|trip|go|visit|been/.test(t))
+      return "Last time I went anywhere it was a tiny coastal town — barely on the map. Highly recommend. Where are you thinking?"
+    if (/live|from|grow up/.test(t))
+      return "I grew up in a pretty quiet city, nothing exciting. You?"
+    return "Hmm, somewhere I haven't been in a while. Why do you ask?"
+  }
+
+  if (/\bwhat\b/.test(t)) {
+    if (/music|listen|song|playlist/.test(t))
+      return "Lately I've been on a big indie folk kick. Something about it just fits the mood. You?"
+    if (/movie|show|watch|series/.test(t))
+      return "I just finished rewatching an old comfort show — one of those you put on when you don't want to think. Any recommendations?"
+    if (/food|eat|cook|fav/.test(t))
+      return "Honestly, anything homemade beats restaurants for me. But I'd never say no to good ramen. You?"
+    if (/do|job|work|study/.test(t))
+      return "I work in design, mostly digital stuff. It's fun but draining some days. What about you?"
+    return "That's actually a great question — I'd have to think about it. What made you ask?"
+  }
+
+  if (/\bhow\b/.test(t)) {
+    if (/feel|doing|been|going/.test(t))
+      return "Honestly pretty good lately — finally getting into a rhythm. You?"
+    if (/hik|trail|go|was it/.test(t))
+      return "It was really refreshing. A bit tiring but the view made it worth it. Have you done anything like that?"
+    if (/work|project|that go/.test(t))
+      return "It went okay! More chaotic than expected but we pulled it off somehow."
+    return "It was a whole process honestly. I'll spare you the details haha. Why do you ask?"
+  }
+
+  if (/\bwhen\b/.test(t)) {
+    if (/last|time|was/.test(t))
+      return "It was a few weeks ago I think? Time's been blurring together lately. You keeping track better than me?"
+    return "Probably sooner than I expected honestly. Do you plan things out or just go with it?"
+  }
+
+  if (/\bwhy\b/.test(t)) {
+    return "Honestly? No deep reason — it just felt right at the time. Does that make sense?"
+  }
+
+  // ── Topic-based replies ───────────────────────────────────────────────────
   if (/hik|trail|outdoor|nature|walk|park|mountain|climb/.test(t))
-    return "That's so cool! I've been trying to get outside more lately too."
+    return "That sounds amazing. I went on a trail last month and it completely reset my brain. Do you go often?"
 
   if (/food|eat|restaurant|cook|coffee|cafe|lunch|dinner|snack/.test(t))
-    return "Okay now I'm hungry haha. Do you have a go-to spot or do you just explore?"
+    return "Now I'm hungry haha. I've been trying to cook more at home lately. Do you have a go-to dish?"
 
   if (/music|song|playlist|concert|band|listen|album/.test(t))
-    return "Yes! Music is everything. What kind of stuff are you into lately?"
+    return "Music is everything to me honestly. I've had the same playlist on repeat for weeks. What are you listening to?"
 
   if (/movie|show|watch|netflix|series|film/.test(t))
-    return "Ooh good taste. I've been on a comfort rewatch kick — what do you recommend?"
+    return "Okay I need recommendations — my watchlist is embarrassingly empty. What's been good lately?"
 
   if (/work|job|busy|meeting|stress|tired/.test(t))
-    return "Ugh same, honestly. We deserve a break. What do you do to decompress?"
+    return "Ugh same. I've been running on autopilot this week. What do you do to actually switch off?"
 
   if (/travel|trip|city|country|flight|visit/.test(t))
-    return "Love that. Where's somewhere you actually want to go next?"
+    return "I love that. I've been wanting to just book something random and go. Any place you'd go back to?"
 
+  // ── Tone/reaction replies ─────────────────────────────────────────────────
+  if (/haha|lol|😂|lmao|funny|joke/.test(t))
+    return "Okay that genuinely got me 😄 You're funnier than I expected."
+
+  if (/same|agree|totally|exactly|right|true/.test(t))
+    return "Right?? I feel like not enough people get that. What made you think about it?"
+
+  if (/miss|used to|remember|nostalgic/.test(t))
+    return "Aw that feeling hits different. What brought that up?"
+
+  if (/love|obsessed|favourite|best/.test(t))
+    return "Okay tell me more — I love when people get passionate about stuff."
+
+  if (/never|hate|don't like|can't stand/.test(t))
+    return "Ha fair enough. I respect a strong opinion. What would you rather do instead?"
+
+  // ── Generic question fallback ─────────────────────────────────────────────
   if (/\?/.test(t))
-    return "Hmm, good question honestly. I'd have to think about that one. What about you?"
+    return "Hmm honestly I've thought about that before. What about you — what do you think?"
 
-  if (/haha|lol|😂|lmao|funny/.test(t))
-    return "Okay that genuinely made me laugh 😄"
-
-  if (/same|agree|totally|exactly|right/.test(t))
-    return "Right?? Like I was just thinking about this the other day."
-
-  // generic fallback
-  return "Haha yeah, I get that. Tell me more."
+  // ── Last resort ───────────────────────────────────────────────────────────
+  return "Haha yeah, I get that. Tell me more though — I'm curious."
 }
 
 const fallbackGuidance = {

@@ -98,3 +98,17 @@ body {
     linear-gradient(#9eb07c 0 0) center 75% / 60px 10px no-repeat;
   border-radius: 16px;
 }
+
+@keyframes floatEgg {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-7px); }
+}
+
+.egg-float {
+  animation: floatEgg 2.6s ease-in-out infinite;
+  transition: transform 0.15s ease;
+}
+.egg-float:hover,
+.egg-float:active {
+  transform: scale(1.15) translateY(-4px);
+}

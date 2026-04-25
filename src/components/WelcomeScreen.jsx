@@ -1,26 +1,30 @@
 import { useState } from 'react'
 
-// Simple pixel egg characters rendered purely with CSS/emoji combinations
+import greenEgg  from '../../img/green.png'
+import purpleEgg from '../../img/purple.png'
+import yellowEgg from '../../img/yellow.png'
+import blueEgg   from '../../img/blue.png'
+import redEgg    from '../../img/red.png'
+
 const EGG_CHARS = [
-  { bg: '#a8c5a0', face: '😐' },
-  { bg: '#c4aee0', face: '🥰' },
-  { bg: '#e8c97a', face: '😜' },
-  { bg: '#a0c0d8', face: '😶' },
-  { bg: '#e8a8b0', face: '😄' },
+  { src: greenEgg,  alt: 'green egg' },
+  { src: purpleEgg, alt: 'purple egg' },
+  { src: yellowEgg, alt: 'yellow egg' },
+  { src: blueEgg,   alt: 'blue egg' },
+  { src: redEgg,    alt: 'red egg' },
 ]
 
-function PixelEgg({ bg, face }) {
+// Stagger delays so eggs float at different phases
+const FLOAT_DELAYS = ['0s', '0.4s', '0.8s', '0.5s', '0.2s']
+
+function PixelEgg({ src, alt, delay }) {
   return (
-    <div
-      className="flex flex-col items-center justify-center rounded-[40%] border-2 border-white/40 shadow-md"
-      style={{
-        backgroundColor: bg,
-        width: 52,
-        height: 62,
-      }}
-    >
-      <span style={{ fontSize: 22, lineHeight: 1 }}>{face}</span>
-    </div>
+    <img
+      src={src}
+      alt={alt}
+      className="egg-float"
+      style={{ width: 58, height: 'auto', animationDelay: delay }}
+    />
   )
 }
 
@@ -108,9 +112,9 @@ function WelcomeScreen({ onSignUp }) {
       </button>
 
       {/* ── Bottom pixel eggs ── */}
-      <div className="mt-auto mb-6 flex items-end gap-3">
+      <div className="mt-auto mb-6 flex items-end gap-4">
         {EGG_CHARS.map((egg, i) => (
-          <PixelEgg key={i} bg={egg.bg} face={egg.face} />
+          <PixelEgg key={i} src={egg.src} alt={egg.alt} delay={FLOAT_DELAYS[i]} />
         ))}
       </div>
 
