@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Send } from 'lucide-react'
-import { getGuidance } from '../lib/geminiGuide'
+import { getGuidance, getElisaReply, isComplexMessage } from '../lib/openaiGuide'
 
 const modeOptions = [
   { label: 'Safe',       bg: 'bg-[#95e888]', border: 'border-[#6bbf60]', text: 'text-[#2d5c28]' },
@@ -11,91 +11,109 @@ const modeOptions = [
 
 function pickReply(userText) {
   const t = userText.toLowerCase()
+  const raw = userText
 
-  // ── Question-word responses (answer first, then optionally flip) ──────────
+  // ── Emoji requests (highest priority) ────────────────────────────────────
+  if (/emoji|emojis/.test(t)) {
+    if (/mood|feeling|feel/.test(t))   return "🌿😌🥾"
+    if (/weather|outside|day/.test(t)) return "☁️🌧️🛋️"
+    if (/energy|vibe/.test(t))         return "⚡😅☕"
+    // user asked for N emojis generically
+    return "🌙✨😊"
+  }
+
+  // ── User sent only emojis — react to them ────────────────────────────────
+  if (/^[\p{Emoji}\s]+$/u.test(raw.trim())) {
+    return "Okay I feel that 😄 what's going on?"
+  }
+
+  // ── Direct question-word responses ───────────────────────────────────────
   if (/\bwhere\b/.test(t)) {
     if (/hik|trail|walk|climb|mountain/.test(t))
-      return "I went to a small trail near the lake. It was really peaceful. Do you hike often?"
-    if (/travel|trip|go|visit|been/.test(t))
-      return "Last time I went anywhere it was a tiny coastal town — barely on the map. Highly recommend. Where are you thinking?"
+      return "A small trail near the lake — barely anyone goes there. It was really peaceful."
+    if (/travel|trip|visit|been/.test(t))
+      return "Last trip was a tiny coastal town, barely on the map. Highly recommend escaping like that."
     if (/live|from|grow up/.test(t))
-      return "I grew up in a pretty quiet city, nothing exciting. You?"
-    return "Hmm, somewhere I haven't been in a while. Why do you ask?"
+      return "Pretty quiet city, nothing too exciting. You?"
+    return "Somewhere I haven't been in a while honestly. Why do you ask?"
   }
 
   if (/\bwhat\b/.test(t)) {
     if (/music|listen|song|playlist/.test(t))
-      return "Lately I've been on a big indie folk kick. Something about it just fits the mood. You?"
+      return "Indie folk lately — something about it just fits the mood. You?"
     if (/movie|show|watch|series/.test(t))
-      return "I just finished rewatching an old comfort show — one of those you put on when you don't want to think. Any recommendations?"
-    if (/food|eat|cook|fav/.test(t))
-      return "Honestly, anything homemade beats restaurants for me. But I'd never say no to good ramen. You?"
+      return "Been rewatching an old comfort show. One of those you put on when you don't want to think."
+    if (/food|eat|cook|fav|favourite/.test(t))
+      return "Anything homemade honestly. But I'd never say no to good ramen."
     if (/do|job|work|study/.test(t))
-      return "I work in design, mostly digital stuff. It's fun but draining some days. What about you?"
-    return "That's actually a great question — I'd have to think about it. What made you ask?"
+      return "Design, mostly digital stuff. Fun but draining some days. You?"
+    return "Good question — I'd actually have to think about that. What made you ask?"
   }
 
   if (/\bhow\b/.test(t)) {
     if (/feel|doing|been|going/.test(t))
-      return "Honestly pretty good lately — finally getting into a rhythm. You?"
-    if (/hik|trail|go|was it/.test(t))
-      return "It was really refreshing. A bit tiring but the view made it worth it. Have you done anything like that?"
-    if (/work|project|that go/.test(t))
-      return "It went okay! More chaotic than expected but we pulled it off somehow."
-    return "It was a whole process honestly. I'll spare you the details haha. Why do you ask?"
+      return "Pretty good lately, finally getting into a rhythm. You?"
+    if (/hik|trail|was it/.test(t))
+      return "Really refreshing. Tiring but the view made it worth it."
+    return "It was a whole process honestly — I'll spare you the details haha."
   }
 
   if (/\bwhen\b/.test(t)) {
     if (/last|time|was/.test(t))
-      return "It was a few weeks ago I think? Time's been blurring together lately. You keeping track better than me?"
-    return "Probably sooner than I expected honestly. Do you plan things out or just go with it?"
+      return "A few weeks ago I think? Time's been blurring together. You keeping better track?"
+    return "Probably sooner than I planned. Do you map things out or just go with it?"
   }
 
-  if (/\bwhy\b/.test(t)) {
-    return "Honestly? No deep reason — it just felt right at the time. Does that make sense?"
-  }
+  if (/\bwhy\b/.test(t))
+    return "Honestly no deep reason — it just felt right. Does that make sense?"
 
   // ── Topic-based replies ───────────────────────────────────────────────────
   if (/hik|trail|outdoor|nature|walk|park|mountain|climb/.test(t))
-    return "That sounds amazing. I went on a trail last month and it completely reset my brain. Do you go often?"
+    return "That sounds great. I went on a trail last month and it completely reset my head. Do you go often?"
 
   if (/food|eat|restaurant|cook|coffee|cafe|lunch|dinner|snack/.test(t))
-    return "Now I'm hungry haha. I've been trying to cook more at home lately. Do you have a go-to dish?"
+    return "Now I'm hungry haha. I've been trying to cook more. Do you have a go-to dish?"
 
   if (/music|song|playlist|concert|band|listen|album/.test(t))
-    return "Music is everything to me honestly. I've had the same playlist on repeat for weeks. What are you listening to?"
+    return "Music is everything to me. I've had the same playlist on repeat for weeks. What are you listening to?"
 
   if (/movie|show|watch|netflix|series|film/.test(t))
-    return "Okay I need recommendations — my watchlist is embarrassingly empty. What's been good lately?"
+    return "I need recommendations — my watchlist is embarrassingly empty. What's been good lately?"
 
   if (/work|job|busy|meeting|stress|tired/.test(t))
-    return "Ugh same. I've been running on autopilot this week. What do you do to actually switch off?"
+    return "Ugh same. Running on autopilot this week. What do you do to actually switch off?"
 
   if (/travel|trip|city|country|flight|visit/.test(t))
-    return "I love that. I've been wanting to just book something random and go. Any place you'd go back to?"
+    return "I've been wanting to just book something random and go. Any place you'd go back to?"
 
-  // ── Tone/reaction replies ─────────────────────────────────────────────────
+  // ── Tone / reaction replies ───────────────────────────────────────────────
   if (/haha|lol|😂|lmao|funny|joke/.test(t))
     return "Okay that genuinely got me 😄 You're funnier than I expected."
 
   if (/same|agree|totally|exactly|right|true/.test(t))
-    return "Right?? I feel like not enough people get that. What made you think about it?"
+    return "Right?? I feel like not enough people get that."
 
   if (/miss|used to|remember|nostalgic/.test(t))
     return "Aw that feeling hits different. What brought that up?"
 
-  if (/love|obsessed|favourite|best/.test(t))
-    return "Okay tell me more — I love when people get passionate about stuff."
+  if (/love|obsessed|fav|favourite|best/.test(t))
+    return "Tell me more — I love when people get passionate about stuff."
 
   if (/never|hate|don't like|can't stand/.test(t))
-    return "Ha fair enough. I respect a strong opinion. What would you rather do instead?"
+    return "Fair enough. I respect a strong opinion. What would you rather do?"
 
   // ── Generic question fallback ─────────────────────────────────────────────
   if (/\?/.test(t))
-    return "Hmm honestly I've thought about that before. What about you — what do you think?"
+    return "Hmm, I've thought about that before. What do you think?"
 
-  // ── Last resort ───────────────────────────────────────────────────────────
-  return "Haha yeah, I get that. Tell me more though — I'm curious."
+  // ── Last resort — varied, no single template ─────────────────────────────
+  const fallbacks = [
+    "That's interesting — tell me more.",
+    "I wasn't expecting that haha. Go on.",
+    "Okay I want to hear more about this.",
+    "Wait really? How did that happen?",
+  ]
+  return fallbacks[Math.floor(userText.length % fallbacks.length)]
 }
 
 const fallbackGuidance = {
@@ -112,6 +130,8 @@ function getConversationStatus(messages, isWaiting) {
   return 'Conversation: pick your move'
 }
 
+const COOLDOWN_MS = 3000
+
 function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, onBack }) {
   const [draft, setDraft] = useState('')
   const [selectedMove, setSelectedMove] = useState('')
@@ -121,6 +141,7 @@ function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, o
   const [error, setError] = useState(null)
   const [isGuideOpen, setIsGuideOpen] = useState(true)
   const bottomRef = useRef(null)
+  const lastCallRef = useRef(0)   // timestamp of last Gemini guide call
 
   // Auto-scroll messages to bottom whenever they change
   useEffect(() => {
@@ -143,22 +164,48 @@ function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, o
     setError(null)
     setIsWaiting(true)
 
-    // Simulate the other person replying after 1 second
-    const replyText = pickReply(trimmed)
-    window.setTimeout(() => {
-      setChatMessages((prev) => [
-        ...prev,
-        { id: `msg-${Date.now()}`, sender: 'match', text: replyText },
-      ])
-      setIsWaiting(false)
-    }, 1000)
+    // Hybrid: use OpenAI for complex messages, local rules for simple ones
+    const complex = isComplexMessage(trimmed)
+    const replyPromise = complex
+      ? getElisaReply(trimmed, chatMessages)
+      : Promise.resolve(null)
+
+    const startTime = Date.now()
+    replyPromise.then((aiReply) => {
+      const replyText = aiReply ?? pickReply(trimmed)
+      const elapsed = Date.now() - startTime
+      const delay = Math.max(0, 900 - elapsed)
+      window.setTimeout(() => {
+        setChatMessages((prev) => [
+          ...prev,
+          { id: `msg-${Date.now()}`, sender: 'match', text: replyText },
+        ])
+        setIsWaiting(false)
+      }, delay)
+    })
   }
 
   const handleMoveSelect = async (move) => {
+    console.log('[move button clicked]', move)
+    // Guard: ignore if already loading
+    if (isLoading) return
+
+    // Guard: cooldown between calls
+    const now = Date.now()
+    if (now - lastCallRef.current < COOLDOWN_MS) {
+      setError('AI is cooling down. Try again in a moment.')
+      setSelectedMove(move)
+      return
+    }
+
     setSelectedMove(move)
     setGuidance(null)
     setError(null)
     setIsLoading(true)
+    lastCallRef.current = now
+
+    const requestId = crypto.randomUUID()
+    console.log('[guide request start]', requestId, move)
 
     try {
       const result = await getGuidance({
@@ -166,10 +213,18 @@ function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, o
         move,
         playstyle: userProfile?.style ?? '',
       })
+      console.log('[guide request end]', requestId)
       setGuidance(result)
-    } catch {
-      setError('AI failed, showing fallback guidance.')
-      setGuidance(fallbackGuidance[move])
+      setError(null)
+    } catch (err) {
+      const is429 = err?.message?.includes('429') || err?.status === 429
+      if (is429) {
+        setError('AI is cooling down. Try again in a moment.')
+        setGuidance(null)
+      } else {
+        setError(null)
+        setGuidance(fallbackGuidance[move])
+      }
     } finally {
       setIsLoading(false)
     }
@@ -285,8 +340,15 @@ function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, o
               </div>
             )}
 
+            {/* Cooldown / 429 message */}
+            {error && !isLoading && (
+              <div className="mt-2 rounded-lg border-2 border-[#e0b060] bg-[#fff3cc] px-3 py-2 text-[#7a5010]">
+                <p className="text-xs font-semibold">{error}</p>
+              </div>
+            )}
+
             {/* AI result */}
-            {guidance && !isLoading && (
+            {guidance && !isLoading && !error && (
               <div className="mt-2 rounded-lg border-2 border-[#c9a84c] bg-[#fdf5d8] p-3 text-[#6b531a]">
                 <p className="pixel-title text-[10px] text-[#9e6b0e]">
                   You chose: {selectedMove}
