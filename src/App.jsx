@@ -1,121 +1,113 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import WelcomeScreen from './components/WelcomeScreen'
+import ProfileSetup from './components/ProfileSetup'
+import MatchPage from './components/MatchPage'
+import ChatPage from './components/ChatPage'
+
+const mockMatches = [
+  {
+    id: 'm1',
+    name: 'Elisa',
+    age: 23,
+    hobbies: 'Music, Movie',
+    bio: 'Loves cozy playlists and late-night movie swaps.',
+  },
+  {
+    id: 'm2',
+    name: 'Noa',
+    age: 24,
+    hobbies: 'Travel, Art',
+    bio: 'Sketchbook collector and weekend city explorer.',
+  },
+  {
+    id: 'm3',
+    name: 'Kai',
+    age: 25,
+    hobbies: 'Books, Tech',
+    bio: 'Builds side projects and reads sci-fi.',
+  },
+]
+
+const initialMessages = [
+  {
+    id: 'msg-1',
+    sender: 'match',
+    text: 'Hey! How has your week been?',
+  },
+  {
+    id: 'msg-2',
+    sender: 'me',
+    text: 'Pretty good, just busy with work. You?',
+  },
+  {
+    id: 'msg-3',
+    sender: 'match',
+    text: 'Same here, but I finally took a break and went hiking yesterday.',
+  },
+]
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentScreen, setCurrentScreen] = useState('welcome')
+  const [userProfile, setUserProfile] = useState({
+    name: '',
+    style: '',
+    interests: '',
+    favoriteTopics: '',
+    avoidTopics: '',
+    avoidTopicsOther: '',
+    conversationEnjoyment: '',
+    exampleMessage: '',
+  })
+
+  const [selectedMatch, setSelectedMatch] = useState(null)
+  const [chatMessages, setChatMessages] = useState(initialMessages)
+
+  const handleStartChat = (match) => {
+    setSelectedMatch(match)
+    setChatMessages(initialMessages)
+    setCurrentScreen('chat')
+  }
+
+  const renderScreen = () => {
+    if (currentScreen === 'welcome') {
+      return <WelcomeScreen onSignUp={() => setCurrentScreen('profileSetup')} />
+    }
+
+    if (currentScreen === 'profileSetup') {
+      return (
+        <ProfileSetup
+          userProfile={userProfile}
+          setUserProfile={setUserProfile}
+          setCurrentScreen={setCurrentScreen}
+        />
+      )
+    }
+
+    if (currentScreen === 'match') {
+      return <MatchPage matches={mockMatches} onStartChat={handleStartChat} />
+    }
+
+    if (currentScreen === 'chat') {
+      return (
+        <ChatPage
+          userProfile={userProfile}
+          selectedMatch={selectedMatch}
+          chatMessages={chatMessages}
+          setChatMessages={setChatMessages}
+          onBack={() => setCurrentScreen('match')}
+        />
+      )
+    }
+
+    return null
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <main className="min-h-screen bg-[#efe8c8] p-0 sm:p-6">
+      <div className="max-w-[400px] mx-auto h-[100dvh] relative overflow-hidden bg-[#f5f1dd] shadow-2xl border-2 border-[#d3bc75] sm:rounded-3xl sm:mt-10">
+        {renderScreen()}
+      </div>
+    </main>
   )
 }
 
