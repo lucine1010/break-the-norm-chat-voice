@@ -1,6 +1,10 @@
 import { GoogleGenAI } from '@google/genai'
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY })
+let _ai = null
+function getAI() {
+  if (!_ai) _ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY ?? '' })
+  return _ai
+}
 
 export async function getGuidance({ messages, move, playstyle }) {
   const chatHistory = messages
@@ -30,7 +34,7 @@ Rules:
 - Do NOT include any explanation outside the JSON
 `.trim()
 
-  const response = await ai.models.generateContent({
+  const response = await getAI().models.generateContent({
     model: 'gemini-2.5-flash',
     contents: prompt,
   })
