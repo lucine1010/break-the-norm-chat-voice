@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Send } from 'lucide-react'
 import { getGuidance, getElisaReply, isComplexMessage } from '../lib/openaiGuide'
+import soundIcon from '../../img/sound1.png'
 
 const modeOptions = [
   { label: 'Safe',       bg: 'bg-[#95e888]', border: 'border-[#6bbf60]', text: 'text-[#2d5c28]' },
@@ -316,7 +317,7 @@ function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, o
                     className="opacity-60 hover:opacity-100 disabled:opacity-30"
                     aria-label="Play voice"
                   >
-                    <img src="img/sound1.png" alt="Play voice" style={{ width: 24, height: 24 }} />
+                    <img src={soundIcon} alt="Play voice" style={{ width: 24, height: 24 }} />
                   </button>
                 )}
               </article>
