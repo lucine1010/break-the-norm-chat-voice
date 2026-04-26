@@ -147,8 +147,10 @@ async function playElisaVoice(text, onDone) {
       body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
     }
   )
+  console.log("[elevenlabs] status", response.status)
   if (!response.ok) {
-    console.error("[elevenlabs] error", response.status, await response.text())
+    const body = await response.text()
+    console.error("[elevenlabs] error body", body)
     onDone()
     return
   }
