@@ -130,6 +130,36 @@ function getConversationStatus(messages, isWaiting) {
   return 'Conversation: pick your move'
 }
 
+console.log("eleven key:", import.meta.env.VITE_ELEVENLABS_API_KEY)
+
+async function playElisaVoice(text, onDone) {
+  console.log("[elevenlabs] calling tts")
+  console.log("[elevenlabs] key exists", !!import.meta.env.VITE_ELEVENLABS_API_KEY)
+  const response = await fetch(
+    "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "xi-api-key": import.meta.env.VITE_ELEVENLABS_API_KEY,
+      },
+      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
+    }
+  )
+  if (!response.ok) {
+    console.error("[elevenlabs] error", response.status, await response.text())
+    onDone()
+    return
+  }
+  const blob = await response.blob()
+  const audioUrl = URL.createObjectURL(blob)
+  const audio = new Audio(audioUrl)
+  audio.onended = onDone
+  audio.onerror = onDone
+  console.log("[elevenlabs] playing")
+  audio.play()
+}
+
 const COOLDOWN_MS = 3000
 
 function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, onBack }) {
@@ -140,6 +170,7 @@ function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, o
   const [isWaiting, setIsWaiting] = useState(false)
   const [error, setError] = useState(null)
   const [isGuideOpen, setIsGuideOpen] = useState(true)
+  const [loadingVoiceMessageId, setLoadingVoiceMessageId] = useState(null)
   const bottomRef = useRef(null)
   const lastCallRef = useRef(0)   // timestamp of last Gemini guide call
 
@@ -266,13 +297,28 @@ function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, o
             {chatMessages.map((message) => (
               <article
                 key={message.id}
-                className={`max-w-[85%] rounded-md border-2 px-3 py-2 text-sm leading-relaxed ${
+                className={`relative max-w-[85%] rounded-md border-2 py-2 text-sm leading-relaxed ${
                   message.sender === 'me'
-                    ? 'ml-auto border-[#bfd0e7] bg-[#d6e2f0] text-[#4a5970]'
-                    : 'border-[#99d989] bg-[#bff2b2] text-[#3d6138]'
+                    ? 'ml-auto border-[#bfd0e7] bg-[#d6e2f0] px-3 text-[#4a5970]'
+                    : 'border-[#99d989] bg-[#bff2b2] pl-3 pr-11 text-[#3d6138]'
                 }`}
               >
                 {message.text}
+                {message.sender === 'match' && (
+                  <button
+                    type="button"
+                    disabled={loadingVoiceMessageId === message.id}
+                    onClick={() => {
+                      setLoadingVoiceMessageId(message.id)
+                      playElisaVoice(message.text, () => setLoadingVoiceMessageId(null))
+                    }}
+                    style={{ position: 'absolute', top: 8, right: 10, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+                    className="opacity-60 hover:opacity-100 disabled:opacity-30"
+                    aria-label="Play voice"
+                  >
+                    <img src="img/sound1.png" alt="Play voice" style={{ width: 24, height: 24 }} />
+                  </button>
+                )}
               </article>
             ))}
             {/* Typing indicator while waiting for mock reply */}
@@ -292,7 +338,7 @@ function ChatPage({ userProfile, selectedMatch, chatMessages, setChatMessages, o
         {/* Toggle bar — always visible */}
         <div className="flex items-center justify-between px-3 py-2">
           <p className="pixel-title text-[10px] text-[#9e6b0e]">
-            {isGuideOpen ? 'Your Move' : '🎮 Guide'}
+            {isGuideOpen ? 'Your Move' : 'Guide'}
           </p>
           <button
             type="button"
